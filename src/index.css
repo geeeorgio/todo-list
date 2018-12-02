@@ -1,0 +1,38 @@
+body {
+    font-family: Arial, "Helvetica Condensed", Helvetica, sans-serif;  
+    text-align: center;
+    background-color: #3c6dc5;
+    color: white;    
+}
+
+h1 {
+    margin-top: 100px;    
+}
+
+div {
+    display: inline-block;
+    cursor: move;
+    text-align: left;
+    width: 300px;
+    max-width: 100%;     
+}
+
+p:first-child {
+    font-size: 130%;    
+}
+input[type='submit'] {
+    background-color: red;
+    border: 0;
+    border-radius: 10px;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+button {
+    background-color: red;
+    border: 0;
+    color: white;
+    border-radius: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ToDo</title>
+  <link rel="stylesheet" type="text/css" href="DoList1.css"> 
+</head>
+<body>  
+  <h1>Список делишек</h1>
+    <form>
+        <label>Запиши что бы не забыть:</label>
+        <input type="text" id="myText">
+        <input type="submit" value="Плюс">
+    </form>
+    <div id="div"></div>
+<script>
+var div = document.getElementById('div'); 
+
+function addTodo(title) {  
+  var val = title;
+  var p = document.createElement("p");
+  p.className = 'todo';
+  var node = document.createTextNode(val)
+  p.appendChild(node);
+
+  var inp = document.createElement('input')
+  inp.type = "checkbox";
+  inp.className = 'complete'
+  p.appendChild(inp);
+
+  var clearButton = document.createElement('button');
+  clearButton.innerHTML = 'Минус';
+  clearButton.className = 'remove';
+  clearButton.style.visibility = "hidden";
+  p.appendChild(clearButton);  
+
+  var tm = document.createElement('a');
+  tm.className = 'time';
+  tm.innerHTML = new Date().toLocaleTimeString();
+  var time = tm.innerHTML; 
+  p.appendChild(tm);
+
+  div.appendChild(p);
+ 
+  document.getElementById("myText").value = "";  
+};
+
+div.addEventListener('click', function(e) {
+  if (parent.addEventListener) {
+    parent.addEventListener('click', handler, false);
+  } else if (parent.attachEvent) {
+    parent.attachEvent('onclick', handler);
+}
+
+function handler(e) {
+var t = e.target;
+let todo = t.parentNode.firstChild.data;
+  if (t.className  === 'complete' && t.checked) {
+   t.parentNode.style.setProperty("text-decoration", "line-through");
+   t.nextSibling.style.visibility = "visible";
+   changeItemState(todo)
+  } else if (t.className === 'complete' && !t.checked) {
+   t.parentNode.style.setProperty("text-decoration", "none");
+   t.nextSibling.style.visibility = "hidden";
+   changeItemState(todo);
+  } 
+    if (t.className === 'remove') {
+        removeItem(todo);   
+        t.parentNode.remove();        
+    }      
+  }; 
+});
+
+var t, todo, mousePosition;
+var offset = [0,0];
+var isDown = false;
+
+div.addEventListener('mousedown', function(event) {
+  t = event.target;
+  if (t.className === 'todo') {
+    todo = t
+  } else {
+    todo = t.parentNode;
+  };
+    isDown = true;
+    offset = [
+      todo.offsetLeft - event.clientX,
+      todo.offsetTop - event.clientY
+    ]     
+});
+ 
+document.addEventListener('mouseup', function(event) {
+    isDown = false; 
+    changeItemPosition(todo);  
+}); 
+
+document.addEventListener('mousemove', function(event) {
+  event.preventDefault();
+  if (isDown) {
+    mousePosition = {
+           x : event.clientX,
+           y : event.clientY
+    };
+    todo.style.position = 'absolute';
+    todo.style.left = (mousePosition.x + offset[0]) + 'px';
+    todo.style.top  = (mousePosition.y + offset[1]) + 'px';  
+  } 
+});   
+
+function setCookie(name, value, days) {
+const expires = new Date(Date.now() + days * 864e5).toUTCString();
+document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires 
+}
+function getCookie(name) {
+  return document.cookie.split('; ').reduce((r, v) => {
+    const parts = v.split('=')
+  return parts[0] === name ? decodeURIComponent(parts[1]) : r
+  }, '')
+}
+
+function deleteCookie(name) {
+  setCookie(name, '', -1)
+}
+
+function getTodoFromCookies() {
+let c = getCookie('todo');
+var arr = [];
+if (c === '') {
+  return arr;
+} else {
+  var g = JSON.parse(c);
+  for (var i = 0; i < g.length; i++) {
+    let v,st;
+    v = g[i]; 
+    st = JSON.parse(v);
+    arr.push(st)
+  }
+} 
+return arr;      
+};
+
+function saveTodo(value,state,pos) {
+var cookieMonster = {
+    val: value,
+    state: state,
+    posX: pos.x,
+    posY: pos.y    
+  } 
+let cookies = getTodoFromCookies();
+cookies.push(cookieMonster); 
+dumpTodosToCookies(cookies);  
+};
+
+function dumpTodosToCookies(arr) {
+var strArr = [];
+var res;  
+ for (var i = 0; i < arr.length; i++) {
+  let c, str;  
+  c = arr[i];
+  if (typeof c !== "string") {
+    str = JSON.stringify(c);
+    strArr.push(str);
+    res = JSON.stringify(strArr)
+  } else {
+    strArr.push(c);
+    res = JSON.stringify(strArr)
+  }
+ }
+  setCookie('todo',res,1)   
+}
+
+function removeItem(item) {
+  var res = getTodoFromCookies();
+  for (var i = 0; i < res.length; i++) {
+    var cook,idx;
+    cook = res[i];
+    if (cook.val === item) {
+      idx = res.indexOf(cook);
+      if (idx !== -1){
+      res.splice(idx,1);
+      } 
+    }
+  }   
+  dumpTodosToCookies(res)
+}
+
+function changeItemState(item) {
+var res = getTodoFromCookies();  
+ for (var i = 0; i < res.length; i++) {
+  var cook,idx;
+  cook = res[i];                     
+    if (cook.val === item) {
+       idx = res.indexOf(cook);        
+      if (idx !== -1) {
+        if (cook.state === "true") {       
+        cook.state = "false";
+        res.splice(idx,1,cook);
+       } else if (cook.state === "false") {
+        cook.state = "true";    
+        res.splice(idx,1,cook);
+        }
+      } 
+    }
+  }
+  dumpTodosToCookies(res)
+};
+
+function getPosition(element) {
+  var rect = element.getBoundingClientRect();
+  var offset = {
+    x: rect.left,
+    y: rect.top
+  };
+  return offset;
+};
+
+function changeItemPosition(element) {
+var pos = getPosition(element);
+var res = getTodoFromCookies();  
+ for (var i = 0; i < res.length; i++) {
+  var cook,idx,pX,pY;
+  cook = res[i];                     
+    if (cook.val === element.firstChild.data) {
+      idx = res.indexOf(cook);        
+      if (idx !== -1) {
+        pX = pos.x;
+        pY = pos.y; 
+        cook.posX = pX;
+        cook.posY = pY;
+        res.splice(idx,1,cook);
+      } 
+    }
+  }
+  dumpTodosToCookies(res);
+};
+
+function printTodos() {
+let res = getTodoFromCookies();
+var p = div.getElementsByTagName('p');
+for (var i = 0; i < res.length; i++) {
+let todo,box,clear,c,val,state,pX,pY;  
+  c = res[i];     
+  val = c.val
+  state = c.state;
+  pX = c.posX;
+  pY = c.posY; 
+  addTodo(val); 
+ for (var j = 0; j < p.length; j++) {
+  todo = p[j]; 
+  box = todo.querySelector('input');
+  clear = todo.querySelector('button');
+  if (c.val === todo.firstChild.data) {
+  todo.style.position = 'absolute';
+  todo.style.left = pX + 'px';
+  todo.style.top = pY + 'px';
+  }
+  if (state === true) {       
+   box.checked = true; 
+   clear.style.visibility = "visible";    
+   todo.style.setProperty("text-decoration", "line-through");
+  } 
+ }
+}   
+};
+
+var form = document.querySelector('form')
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  var x = document.getElementById('myText')
+  var val = x.value;
+
+  if (val === "") {
+    alert("Зачем тебе пустая запись? Введи что-то в поле");
+    return false
+  }   
+    
+  addTodo(val);
+  var p = div.getElementsByTagName('p');
+  let state,pos;
+  for (var i = 0; i < p.length; i++) {
+    let todo, box; 
+    todo = p[i]; 
+    box = todo.querySelector('input');
+    state = box.checked; 
+    pos = getPosition(todo);
+  }     
+  saveTodo(val,state,pos);                                
+});
+
+document.addEventListener("DOMContentLoaded", function(e){
+  if (document.cookie) {
+      printTodos()
+  }
+});
+</script>
+</body>
+</html>
